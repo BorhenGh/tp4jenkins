@@ -1,23 +1,11 @@
-# Use an official Node.js runtime as the base image
-FROM node:16.14.0 as node
-
-# Set the working directory inside the container
+FROM node:16-alpine AS build
 WORKDIR /app
-
-# Copy the package.json and package-lock.json files to the container
 COPY package*.json ./
-
-# Install application dependencies
-RUN npm install
-
-# Copy the rest of the application code to the container
+RUN npm install --force
 COPY . .
+RUN npm run build --force
 
-# Build the application (assuming you have a build script defined in package.json)
-RUN npm run build
-
-# Expose the port your application will listen on
-EXPOSE 4200
-
-# Define the command to start your application
-CMD ["npm", "start"]
+### STAGE 2: Run ###
+FROM nginx:1.17.1-alpine
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /app/dist/angular-app /usr/share/nginx/html
